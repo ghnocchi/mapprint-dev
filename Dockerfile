@@ -7,32 +7,36 @@ MAINTAINER ghnocchi <gs.nocchi+dockerhub@gmail.com>
 # RUN: docker buildするときに実行される
 RUN set -x && \
   echo "now building..." && \
-  apt -y update && \
-  apt install -y git && \
-  apt install -y wget && \
-  apt install -y gcc-6 autoconf bison build-essential libssl-dev libyaml-dev libreadline6-dev zlib1g-dev libncurses5-dev libffi-dev libgdbm3 libgdbm-dev && \
-  apt install -y libssl-dev
+  apt-get -y update && \
+  apt-get install -y git && \
+  apt-get install -y wget && \
+  apt-get install -y gcc-6 autoconf bison build-essential libssl-dev libyaml-dev libreadline6-dev zlib1g-dev libncurses5-dev libffi-dev libgdbm3 libgdbm-dev && \
+  apt-get install -y libssl-dev
   
 
 # ruby install 2.4.4
-RUN git clone https://github.com/sstephenson/rbenv.git ~/.rbenv && \
+RUN ["/bin/bash", "-c", " \
+  git clone https://github.com/sstephenson/rbenv.git ~/.rbenv && \
   git clone https://github.com/sstephenson/ruby-build.git ~/.rbenv/plugins/ruby-build && \
-  echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bash_profile && \
-  echo 'eval "$(rbenv init -)"' >> ~/.bash_profile && \
-  . ~/.bash_profile && \
+  echo 'export PATH=\"$HOME/.rbenv/bin:$PATH\"' >> ~/.bash_profile && \
+  echo 'eval \"$(rbenv init -)\"' >> ~/.bash_profile && \
+  source ~/.bash_profile && \
   rbenv install 2.4.4 && \
   rbenv global 2.4.4 && \
   rbenv exec gem install bundler && \
-  rbenv rehash
+  rbenv rehash \
+  "]
 
 
 # node install latest lts ver
 RUN ["/bin/bash", "-c", " \
   wget -O - https://raw.githubusercontent.com/creationix/nvm/master/install.sh | bash && \
-  . ~/.bashrc && \
+  source ~/.bashrc && \
   nvm install v8.11.3 && \
   nvm alias default v8.11.3 \
   "]
+
+COPY entrypoint.sh .
 
 RUN mkdir /app
 
@@ -42,6 +46,6 @@ EXPOSE 35729
 
 # CMD: docker runするときに実行される
 #CMD echo "now running..."
-#ENTRYPOINT su postgres -c "/usr/pgsql-10/bin/postgres -D /usr/local/pgsql/data > /usr/local/pgsql/data/postgresql.log 2>&1"
+ENTRYPOINT /bin/bash /entrypoint.sh
 
-CMD /bin/bash
+#CMD /bin/bash
